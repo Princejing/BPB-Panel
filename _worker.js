@@ -1,80 +1,80 @@
-// @ts-nocheck
-// <!--GAMFC-->version base on commit 43fad05dcdae3b723c53c226f8181fc5bd47223e, time is 2023-06-22 15:20:02 UTC<!--GAMFC-END-->.
-// @ts-ignore
+//@ts-nocheck
+// <!--GAMFC-->版本基于提交 43fad05dcdae3b723c53c226f8181fc5bd47223e，时间为 2023-06-22 15:20:02 UTC<!--GAMFC-END-->。
+//@ts-忽略
 // https://github.com/bia-pain-bache/BPB-Worker-Panel
 
-import { connect } from 'cloudflare:sockets';
+从'cloudflare:sockets'导入{     connect     }；
 
-// How to generate your own UUID:
+// 如何生成自己的UUID：
 // https://www.uuidgenerator.net/
-let userID = '9e3bcf2f-de98-46e9-89a1-cde563bbb2fc';
+让用户ID = '9e3bcf2f-de98-46e9-89a1-cde563bbb2fc' ;
 
 // https://www.nslookup.io/domains/cdn.xn--b6gac.eu.org/dns-records/
 // https://www.nslookup.io/domains/cdn-all.xn--b6gac.eu.org/dns-records/
-const proxyIPs= ['cdn.xn--b6gac.eu.org', 'cdn-all.xn--b6gac.eu.org', 'ipdb.rr.nu','www.xfltd.top'];
+const    代理IP = [   'cdn.xn--b6gac.eu.org' , 'cdn-all.xn--b6gac.eu.org' , 'ipdb.rr.nu' , 'www.xfltd.top'  ] ;
 
-const defaultHttpPorts = ['80', '8080', '2052', '2082', '2086', '2095', '8880'];
-const defaultHttpsPorts = ['443', '8443', '2053', '2083', '2087', '2096'];
+const  默认HttpPorts = [   '80' , '8080' , '2052' , '2082' , '2086' , '2095' , '8880'    ]；
+const       默认HttpsPorts = [      '443' , '8443' , '2053' , '2083' , '2087' , '2096'     ] ;
 
-let proxyIP = proxyIPs[Math.floor(Math.random() * proxyIPs.length)];
+让 proxyIP = proxyIPs [ Math.楼层（数学.随机  （）*代理IPs.长度）]；    
 
-let dohURL = 'https://cloudflare-dns.com/dns-query';
+让 dohURL = 'https://cloudflare-dns.com/dns-query' ;
 
-let panelVersion = '2.4.5';
+让面板版本= '2.4.5'；
 
-if (!isValidUUID(userID)) {
-    throw new Error('uuid is not valid');
+如果 （！isValidUUID （用户ID ））{
+    抛出新的错误（'uuid 无效'）；
 }
 
-export default {
+原{
     /**
-     * @param {import("@cloudflare/workers-types").Request} request
-     * @param {{UUID: string, PROXYIP: string, DNS_RESOLVER_URL: string}} env
-     * @param {import("@cloudflare/workers-types").ExecutionContext} ctx
-     * @returns {Promise<Response>}
+     * @param {import("@cloudflare/workers-types").Request} 请求
+     * @param {{UUID: string, PROXYIP: string, DNS_RESOLVER_URL: string}} 环境
+     * @param {导入（“@cloudflare/workers-types”）。ExecutionContext} ctx
+     *@returns{Promise<响应>}
      */
-    async fetch(request, env, ctx) {
-        try {
+     拿來
+        試試{
             
-            userID = env.UUID || userID;
-            proxyIP = env.PROXYIP || proxyIP;
-            dohURL = env.DNS_RESOLVER_URL || dohURL;
-            const upgradeHeader = request.headers.get('Upgrade');
+用户ID =环境。UUID || 用户ID；
+            代理IP = 环境。PROXYIP ||代理IP；
+            dohURL = 环境。DNS_RESOLVER_URL || 网址；
+            const     updateHeader =请求。标头。获取 (     '升级'      ）；
             
-            if (!upgradeHeader || upgradeHeader !== 'websocket') {
+            如果 （！upgradeHeader || upgradeHeader！== 'websocket'）{
                 
-                const url = new URL(request.url);
-                const searchParams = new URLSearchParams(url.search);
-                const host = request.headers.get('Host');
-                const client = searchParams.get('app');
+                常量 url =新的URL       (请求.url      ) ;
+                常量 searchParams =new URLSearchParams ( url.search ) ;​ 
+                const    host =请求。标头。获取 (    ‘主机’）；
+                const 客户端= searchParams。get       (      '应用程序'     ) ;
 
-                switch (url.pathname) {
+                转变    （ url.路径名） {
 
-                    case '/cf':
-                        return new Response(JSON.stringify(request.cf, null, 4), {
-                            status: 200,
-                            headers: {
-                                'Content-Type': 'application/json;charset=utf-8',
-                            },
-                        });
+                    案例'/cf'：
+                        返回新的响应（ JSON。stringify （ request.cf，null，4 ），{
+                            状态：200，
+                            标题：{
+                                '内容类型'：'application/json;charset=utf-8'，
+                            }，
+                        }）；
                         
-                    case `/sub/${userID}`:
+                    案例 `/sub/ ${ userID } `：
 
-                        if (client === 'sfa') {
-                            const BestPingSFA = await getSingboxConfig(env, host);
-                            return new Response(`${JSON.stringify(BestPingSFA, null, 4)}`, { status: 200 });                            
+                        如果（客户端=== 'sfa'）{
+                            const    BestPingSFA =等待getSingboxConfig  ( env， host ) ;
+                            返回新的响应（` ${ JSON. stringify  （BestPingSFA，null，4 ）} `，{ status：200 }）；                              
                         }
-                        const normalConfigs = await getNormalConfigs(env, host, client);
-                        return new Response(normalConfigs, { status: 200 });                        
+                        const   normalConfigs = 等待getNormalConfigs  ( env, host, client ) ;
+                        返回新的响应（ normalConfigs，{   status：200   }）；                        
 
-                    case `/fragsub/${userID}`:
+                    案例 `/fragsub/ ${ userID } `：
 
-                        let fragConfigs = await getFragmentConfigs(env, host, 'v2ray');
-                        fragConfigs = fragConfigs.map(config => config.config);
+                        让 fragConfigs =等待 getFragmentConfigs ( env, host, 'v2ray' )；
+fragConfigs =                         fragConfigs.map ( config => config.config )；
 
-                        return new Response(`${JSON.stringify(fragConfigs, null, 4)}`, { status: 200 });
+                        返回 新的Response （` ${ JSON.stringify （fragConfigs，null，4 ）} `，{ status：200 } ）；  
 
-                    case `/warpsub/${userID}`:
+                    案例 `/warpsub/ ${ userID } `：
 
                         const wowConfig = await getWarpConfigs(env, client);
                         return new Response(`${JSON.stringify(wowConfig, null, 4)}`, { status: 200 });
@@ -200,7 +200,7 @@ export default {
 
                     default:
                         // return new Response('Not found', { status: 404 });
-                        url.hostname = 'up.enterdesk.com/edpic_source/3c/d2/f0/3cd2f0475061f80a64280b3923d1ce94.jpg';
+                        url.hostname = 'www.youtube.com';
                         url.protocol = 'https:';
                         request = new Request(url, request);
                         return await fetch(request);
