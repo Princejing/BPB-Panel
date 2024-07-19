@@ -200,7 +200,7 @@ export default {
 
                     default:
                         // return new Response('Not found', { status: 404 });
-                        url.hostname = 'hello world';
+                        url.hostname = 'https://up.enterdesk.com/edpic_source/3c/d2/f0/3cd2f0475061f80a64280b3923d1ce94.jpg';
                         url.protocol = 'https:';
                         request = new Request(url, request);
                         return await fetch(request);
